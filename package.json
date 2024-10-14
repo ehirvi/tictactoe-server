@@ -1,0 +1,28 @@
+{
+  "name": "tictactoe-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts",
+    "lint": "eslint .",
+    "build": "tsc",
+    "start": "node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "@types/eslint__js": "^8.42.3",
+    "@types/express": "^5.0.0",
+    "eslint": "^9.12.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "^8.8.1"
+  }
+}
