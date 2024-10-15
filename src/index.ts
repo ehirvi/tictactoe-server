@@ -27,9 +27,11 @@ wss.on("connection", (ws) => {
         if (playerMovement) {
           console.log(playerMovement);
           const updatedBoard = playerMovement.game_board;
-          updatedBoard[playerMovement.index] = playerMovement.player.host
-            ? "X"
-            : "O";
+          if (updatedBoard[playerMovement.index] === null) {
+            updatedBoard[playerMovement.index] = playerMovement.player.host
+              ? "X"
+              : "O";
+          }
           ws.send(JSON.stringify(updatedBoard));
         }
       } catch (err: unknown) {
