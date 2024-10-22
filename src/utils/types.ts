@@ -1,11 +1,30 @@
+import { WebSocket } from "ws";
+
+type PlayerRole = "Host" | "Guest";
+
+type PlayerMark = "X" | "O"
+
+type GameBoard = (PlayerMark | null)[];
+
+export interface Player {
+  id: string;
+  connection: WebSocket;
+  role: PlayerRole;
+}
+
+export interface GameSession {
+  id: string;
+  players: Player[];
+  game_board: GameBoard;
+}
+
 export interface PlayerMovement {
   type: "PlayerMovement";
   player: {
     id: string;
-    host: boolean;
+    role: PlayerRole;
   };
-  game_board: (string | null)[];
-  index: number;
+  position: number;
 }
 
 // Add all game actions into this union
