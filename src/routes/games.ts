@@ -9,11 +9,10 @@ router.post("/create", (_req, res) => {
   const id = uuid();
   const newSession: GameSession = {
     id,
-    players: [],
+    players: {},
     game_board: [null, null, null, null, null, null, null, null, null],
   };
   gameSessions[id] = newSession;
-  console.log("POST", gameSessions);
   res.json({ id });
 });
 

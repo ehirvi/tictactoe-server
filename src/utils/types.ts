@@ -14,7 +14,7 @@ export interface Player {
 
 export interface GameSession {
   id: string;
-  players: Player[];
+  players: Record<string, Player>;
   game_board: GameBoard;
 }
 
@@ -27,6 +27,7 @@ export interface PlayerJoinEvent {
 
 export interface PlayerMoveEvent {
   type: "PlayerMove";
+  game_id: string;
   player: {
     id: string;
     role: PlayerRole;
@@ -34,5 +35,5 @@ export interface PlayerMoveEvent {
   position: number;
 }
 
-// Add all game event into this union
-export type GameEvent = PlayerMoveEvent;
+// TODO: Add all events that are handled in the server into this union
+export type ServerEvent = PlayerMoveEvent;
