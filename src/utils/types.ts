@@ -2,7 +2,7 @@ import { WebSocket } from "ws";
 
 type PlayerRole = "Host" | "Guest";
 
-type PlayerMark = "X" | "O"
+type PlayerMark = "X" | "O";
 
 type GameBoard = (PlayerMark | null)[];
 
@@ -18,8 +18,15 @@ export interface GameSession {
   game_board: GameBoard;
 }
 
-export interface PlayerMovement {
-  type: "PlayerMovement";
+export type GameSessionMap = Record<string, GameSession>;
+
+export interface PlayerJoinEvent {
+  type: "PlayerJoin";
+  player_id: string;
+}
+
+export interface PlayerMoveEvent {
+  type: "PlayerMove";
   player: {
     id: string;
     role: PlayerRole;
@@ -27,5 +34,5 @@ export interface PlayerMovement {
   position: number;
 }
 
-// Add all game actions into this union
-export type GameAction = PlayerMovement;
+// Add all game event into this union
+export type GameEvent = PlayerMoveEvent;

@@ -1,10 +1,11 @@
-import { playerMovementSchema } from "./schemas";
+import { playerMoveSchema } from "./schemas";
+import { PlayerMoveEvent } from "./types";
 
 export const parseGameAction = (object: unknown) => {
   // Change this to union eventually
-  const parsedAction = playerMovementSchema.parse(object);
-  if (parsedAction.type === "PlayerMovement") {
-    return parsedAction;
+  const parsedAction = playerMoveSchema.parse(object);
+  if (parsedAction.type === "PlayerMove") {
+    return parsedAction as PlayerMoveEvent;
   }
   return;
 };

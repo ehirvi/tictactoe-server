@@ -2,9 +2,9 @@ import { z } from "zod";
 
 const playerRoleSchema = z.union([z.literal("Host"), z.literal("Guest")]);
 
-// const playerMarkSchema = z.union([z.literal("X"), z.literal("O"), z.null()])
+// const playerMarkSchema = z.union([z.literal("X"), z.literal("O")])
 
-export const playerMovementSchema = z.object({
+export const playerMoveSchema = z.object({
   type: z.string(),
   player: z.object({
     id: z.string(),
@@ -14,4 +14,4 @@ export const playerMovementSchema = z.object({
 });
 
 // Add schemas to this union
-// export const gameActionSchema = z.union([playerMovementSchema]);
+// export const gameEventSchema = z.union([playerMoveSchema]);
