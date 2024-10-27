@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 
-type PlayerRole = "Host" | "Guest";
+export type PlayerRole = "Host" | "Guest";
 
 type PlayerMark = "X" | "O";
 
@@ -30,7 +30,6 @@ export interface PlayerMoveEvent {
   game_id: string;
   player: {
     id: string;
-    role: PlayerRole;
   };
   position: number;
 }

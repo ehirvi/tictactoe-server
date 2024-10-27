@@ -9,19 +9,30 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   if (request.url) {
     const sessionId = request.url.slice(1);
     const gameSession = gameSessions[sessionId];
-    if (Object.keys(gameSession.players).length < 2) {
-      const player: Player = {
-        id: uuid(),
-        connection: socket,
-        role: "Host",
-      };
-      gameSessions[sessionId].players[player.id] = player;
-      const playerJoined: PlayerJoinEvent = {
-        type: "PlayerJoin",
-        player_id: player.id,
-      };
-      socket.send(JSON.stringify(playerJoined));
+    if (Object.keys(gameSession.players).length > 1) {
+      socket.send("The game already has 2 players");
+      socket.close();
+      return;
     }
+    const playerRole =
+      Object.keys(gameSession.players).length === 0 ? "Host" : "Guest";
+
+    const player: Player = {
+      id: uuid(),
+      connection: socket,
+      role: playerRole,
+    };
+    gameSessions[sessionId].players[player.id] = player;
+    const playerJoined: PlayerJoinEvent = {
+      type: "PlayerJoin",
+      player_id: player.id,
+    };
+    const gameBoardEvent = {
+      type: "GameBoard",
+      game_board: gameSession.game_board,
+    };
+    socket.send(JSON.stringify(playerJoined));
+    socket.send(JSON.stringify(gameBoardEvent));
   }
 };
 
@@ -52,7 +63,7 @@ const movePlayer = (playerMove: PlayerMoveEvent) => {
   console.log(gameSessions);
   if (gameSession.game_board[playerMove.position] === null) {
     gameSessions[sessionId].game_board[playerMove.position] =
-      playerMove.player.role === "Host" ? "X" : "O";
+      gameSession.players[playerMove.player.id].role === "Host" ? "X" : "O";
   }
   // TODO: create type for gameBoardEvent
   const gameBoardEvent = {
