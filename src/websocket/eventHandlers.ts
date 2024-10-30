@@ -3,7 +3,12 @@ import { IncomingMessage } from "http";
 import { v4 as uuid } from "uuid";
 import { parseGameEvent } from "../utils/parsers";
 import gameSessions from "../data/gameSessions";
-import { Player, PlayerJoinEvent, PlayerMoveEvent } from "../utils/types";
+import {
+  GameBoardUpdateEvent,
+  Player,
+  PlayerJoinEvent,
+  PlayerMoveEvent,
+} from "../utils/types";
 
 const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   if (request.url) {
@@ -23,16 +28,18 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
       role: playerRole,
     };
     gameSessions[sessionId].players[player.id] = player;
-    const playerJoined: PlayerJoinEvent = {
+    const playerJoinEvent: PlayerJoinEvent = {
       type: "PlayerJoin",
       player_id: player.id,
+      role: player.role,
     };
-    const gameBoardEvent = {
-      type: "GameBoard",
+    const gameBoardUpdateEvent: GameBoardUpdateEvent = {
+      type: "GameBoardUpdate",
       game_board: gameSession.game_board,
+      turn: "Host",
     };
-    socket.send(JSON.stringify(playerJoined));
-    socket.send(JSON.stringify(gameBoardEvent));
+    socket.send(JSON.stringify(playerJoinEvent));
+    socket.send(JSON.stringify(gameBoardUpdateEvent));
   }
 };
 
@@ -57,22 +64,24 @@ const onMessage = (socket: WebSocket, data: RawData) => {
   }
 };
 
-const movePlayer = (playerMove: PlayerMoveEvent) => {
-  const sessionId = playerMove.game_id;
+const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
+  const sessionId = playerMoveEvent.game_id;
   const gameSession = gameSessions[sessionId];
   console.log(gameSessions);
-  if (gameSession.game_board[playerMove.position] === null) {
-    gameSessions[sessionId].game_board[playerMove.position] =
-      gameSession.players[playerMove.player.id].role === "Host" ? "X" : "O";
+  if (gameSession.game_board[playerMoveEvent.position] === null) {
+    const playerRole = gameSession.players[playerMoveEvent.player.id].role;
+    gameSessions[sessionId].game_board[playerMoveEvent.position] =
+      playerRole === "Host" ? "X" : "O";
+    gameSessions[sessionId].turn = playerRole === "Host" ? "Guest" : "Host";
+    const gameBoardUpdateEvent: GameBoardUpdateEvent = {
+      type: "GameBoardUpdate",
+      game_board: gameSession.game_board,
+      turn: gameSession.turn,
+    };
+    Object.values(gameSession.players).forEach((player) => {
+      player.connection.send(JSON.stringify(gameBoardUpdateEvent));
+    });
   }
-  // TODO: create type for gameBoardEvent
-  const gameBoardEvent = {
-    type: "GameBoard",
-    game_board: gameSession.game_board,
-  };
-  Object.values(gameSession.players).forEach((player) => {
-    player.connection.send(JSON.stringify(gameBoardEvent));
-  });
 };
 
 export default { onConnection, onMessage };
