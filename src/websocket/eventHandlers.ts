@@ -1,14 +1,10 @@
 import { RawData, WebSocket } from "ws";
 import { IncomingMessage } from "http";
 import { v4 as uuid } from "uuid";
-import { parseGameEvent } from "../utils/parsers";
+import actions from "../game/actions";
 import gameSessions from "../data/gameSessions";
-import {
-  GameBoardUpdateEvent,
-  Player,
-  PlayerJoinEvent,
-  PlayerMoveEvent,
-} from "../utils/types";
+import { parseGameEvent } from "../utils/parsers";
+import { GameBoardUpdateEvent, Player, PlayerJoinEvent } from "../utils/types";
 
 const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   if (request.url) {
@@ -51,7 +47,7 @@ const onMessage = (socket: WebSocket, data: RawData) => {
       if (gameEvent) {
         switch (gameEvent.type) {
           case "PlayerMove":
-            movePlayer(gameEvent);
+            actions.movePlayer(gameEvent);
             break;
         }
       }
@@ -61,26 +57,6 @@ const onMessage = (socket: WebSocket, data: RawData) => {
         socket.send("Forbidden request");
       }
     }
-  }
-};
-
-const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
-  const sessionId = playerMoveEvent.game_id;
-  const gameSession = gameSessions[sessionId];
-  console.log(gameSessions);
-  if (gameSession.game_board[playerMoveEvent.position] === null) {
-    const playerRole = gameSession.players[playerMoveEvent.player.id].role;
-    gameSessions[sessionId].game_board[playerMoveEvent.position] =
-      playerRole === "Host" ? "X" : "O";
-    gameSessions[sessionId].turn = playerRole === "Host" ? "Guest" : "Host";
-    const gameBoardUpdateEvent: GameBoardUpdateEvent = {
-      type: "GameBoardUpdate",
-      game_board: gameSession.game_board,
-      turn: gameSession.turn,
-    };
-    Object.values(gameSession.players).forEach((player) => {
-      player.connection.send(JSON.stringify(gameBoardUpdateEvent));
-    });
   }
 };
 

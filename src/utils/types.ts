@@ -1,10 +1,10 @@
 import { WebSocket } from "ws";
 
-type PlayerMark = "X" | "O";
+export type PlayerMark = "X" | "O";
 
 export type PlayerRole = "Host" | "Guest";
 
-type GameBoard = (PlayerMark | null)[];
+export type GameBoard = (PlayerMark | null)[];
 
 export interface Player {
   id: string;
@@ -17,6 +17,7 @@ export interface GameSession {
   players: Record<string, Player>;
   game_board: GameBoard;
   turn: PlayerRole;
+  on_going: boolean;
 }
 
 export type GameSessionMap = Record<string, GameSession>;
@@ -45,4 +46,4 @@ export interface PlayerMoveEvent {
 }
 
 // TODO: Add all events that are handled in the server into this union
-export type ServerEvent = PlayerMoveEvent;
+// export type ServerEvent = PlayerMoveEvent;

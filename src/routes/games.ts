@@ -14,6 +14,7 @@ router.post("/create", (_req: Request, res: Response) => {
     players: {},
     game_board: [null, null, null, null, null, null, null, null, null],
     turn: "Host",
+    on_going: true,
   };
   gameSessions[id] = newSession;
   res.status(201).json({ id });
