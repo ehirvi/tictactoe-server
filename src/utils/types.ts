@@ -35,6 +35,11 @@ export interface GameBoardUpdateEvent {
   turn: PlayerRole;
 }
 
+export interface GameOverEvent {
+  type: "GameOver";
+  message: string;
+}
+
 // Events received and handled by the server
 export interface PlayerMoveEvent {
   type: "PlayerMove";

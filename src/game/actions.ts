@@ -1,7 +1,9 @@
 import gameSessions from "../data/gameSessions";
 import {
   GameBoardUpdateEvent,
+  GameOverEvent,
   GameSession,
+  Player,
   PlayerMark,
   PlayerMoveEvent,
 } from "../utils/types";
@@ -12,7 +14,8 @@ const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
   const gameSession = gameSessions[sessionId];
   console.log(gameSessions);
   if (gameSession.game_board[playerMoveEvent.position] === null) {
-    const playerRole = gameSession.players[playerMoveEvent.player.id].role;
+    const player = gameSession.players[playerMoveEvent.player.id];
+    const playerRole = player.role;
     const playerMark = playerRole === "Host" ? "X" : "O";
     gameSession.game_board[playerMoveEvent.position] = playerMark;
     gameSession.turn = playerRole === "Host" ? "Guest" : "Host";
@@ -24,22 +27,41 @@ const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
     Object.values(gameSession.players).forEach((player) => {
       player.connection.send(JSON.stringify(gameBoardUpdateEvent));
     });
-    checkGameConditions(gameSession, playerMark);
+    checkGameConditions(gameSession, player.id, playerMark);
   }
 };
 
-const checkGameConditions = (gameSession: GameSession, mark: PlayerMark) => {
+const checkGameConditions = (
+  gameSession: GameSession,
+  playerId: Player["id"],
+  playerMark: PlayerMark
+) => {
   let playerWon = false;
   for (const row of winningRows) {
-    if (!hasWinningRow(gameSession.game_board, row, mark)) {
+    if (!hasWinningRow(gameSession.game_board, row, playerMark)) {
       continue;
     }
     playerWon = true;
+    break;
   }
-  if (playerWon || isBoardFull(gameSession.game_board)) {
+  if (playerWon) {
     gameSession.on_going = false;
     Object.values(gameSession.players).forEach((player) => {
-      // TODO: send message to players informing them the game is over
+      const gameOverEvent: GameOverEvent = {
+        type: "GameOver",
+        message: player.id === playerId ? "You have won!" : "You have lost!",
+      };
+      player.connection.send(JSON.stringify(gameOverEvent));
+      player.connection.close();
+    });
+  } else if (isBoardFull(gameSession.game_board)) {
+    gameSession.on_going = false;
+    const gameOverEvent: GameOverEvent = {
+      type: "GameOver",
+      message: "It's a draw!",
+    };
+    Object.values(gameSession.players).forEach((player) => {
+      player.connection.send(JSON.stringify(gameOverEvent));
       player.connection.close();
     });
   }
