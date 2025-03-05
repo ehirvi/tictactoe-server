@@ -1,0 +1,64 @@
+name: CI pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deployment_job:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          repository: ehirvi/tictactoe-web
+          path: frontend
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+      - name: Install Playwright browsers
+        run: |
+          cd frontend
+          npx playwright install --with-deps
+      - name: Build frontend code
+        run: |
+          cd frontend
+          npm run build
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          path: backend
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+      - name: Lint backend codebase
+        run: |
+          cd backend
+          npm run lint
+      - name: Build backend code
+        run: |
+          cd backend
+          npm run build
+      - name: Start backend proccess
+        run: |
+          cd backend
+          npm run start &
+      - name: Wait until backend is running
+        run: npx wait-on http://localhost:3000/ping
+      - name: Run End-to-End Playwright tests
+        run: |
+          cd frontend
+          npm run test:e2e
+      - name: Upload Playwright test report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 30
