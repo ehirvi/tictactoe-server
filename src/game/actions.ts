@@ -54,6 +54,7 @@ const checkGameConditions = (
       player.connection.send(JSON.stringify(gameOverEvent));
       player.connection.close();
     });
+    delete gameSessions[gameSession.id]
   } else if (isBoardFull(gameSession.game_board)) {
     gameSession.on_going = false;
     const gameOverEvent: GameOverEvent = {
@@ -64,6 +65,7 @@ const checkGameConditions = (
       player.connection.send(JSON.stringify(gameOverEvent));
       player.connection.close();
     });
+    delete gameSessions[gameSession.id]
   }
 };
 

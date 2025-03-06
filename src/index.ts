@@ -26,4 +26,8 @@ wss.on("connection", (socket, request) => {
   socket.on("message", (data) => {
     eventHandlers.onMessage(socket, data);
   });
+
+  socket.on("close", () => {
+    eventHandlers.onClose(request);
+  });
 });
