@@ -35,7 +35,7 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   const gameBoardUpdateEvent: GameBoardUpdateEvent = {
     type: "GameBoardUpdate",
     game_board: gameSession.game_board,
-    turn: "Host",
+    turn: gameSession.turn,
   };
   socket.send(JSON.stringify(playerJoinEvent));
   socket.send(JSON.stringify(gameBoardUpdateEvent));
