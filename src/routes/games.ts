@@ -25,7 +25,6 @@ router.post(
   (req: Request<unknown, unknown, { id: string }>, res: Response) => {
     try {
       const gameId: string = req.body.id;
-      console.log(gameId);
       const gameSession = gameSessions[gameId];
       if (!gameSession) {
         res.status(404).json({ error: "No matching game was found" });

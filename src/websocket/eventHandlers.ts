@@ -7,36 +7,38 @@ import { parseGameEvent } from "../utils/parsers";
 import { GameBoardUpdateEvent, Player, PlayerJoinEvent } from "../utils/types";
 
 const onConnection = (socket: WebSocket, request: IncomingMessage) => {
-  if (request.url) {
-    const sessionId = request.url.slice(1);
-    const gameSession = gameSessions[sessionId];
-    if (Object.keys(gameSession.players).length > 1) {
-      socket.send("The game already has 2 players");
-      socket.close();
-      return;
-    }
-    const playerRole =
-      Object.keys(gameSession.players).length === 0 ? "Host" : "Guest";
-
-    const player: Player = {
-      id: uuid(),
-      connection: socket,
-      role: playerRole,
-    };
-    gameSessions[sessionId].players[player.id] = player;
-    const playerJoinEvent: PlayerJoinEvent = {
-      type: "PlayerJoin",
-      player_id: player.id,
-      role: player.role,
-    };
-    const gameBoardUpdateEvent: GameBoardUpdateEvent = {
-      type: "GameBoardUpdate",
-      game_board: gameSession.game_board,
-      turn: "Host",
-    };
-    socket.send(JSON.stringify(playerJoinEvent));
-    socket.send(JSON.stringify(gameBoardUpdateEvent));
+  if (!request.url) {
+    socket.close();
+    return;
   }
+  const sessionId = request.url.slice(1);
+  const gameSession = gameSessions[sessionId];
+  if (Object.keys(gameSession.players).length > 1) {
+    socket.send("The game already has 2 players");
+    socket.close();
+    return;
+  }
+  const playerRole =
+    Object.keys(gameSession.players).length === 0 ? "Host" : "Guest";
+
+  const player: Player = {
+    id: uuid(),
+    connection: socket,
+    role: playerRole,
+  };
+  gameSessions[sessionId].players[player.id] = player;
+  const playerJoinEvent: PlayerJoinEvent = {
+    type: "PlayerJoin",
+    player_id: player.id,
+    role: player.role,
+  };
+  const gameBoardUpdateEvent: GameBoardUpdateEvent = {
+    type: "GameBoardUpdate",
+    game_board: gameSession.game_board,
+    turn: "Host",
+  };
+  socket.send(JSON.stringify(playerJoinEvent));
+  socket.send(JSON.stringify(gameBoardUpdateEvent));
 };
 
 const onMessage = (socket: WebSocket, data: RawData) => {
@@ -60,4 +62,18 @@ const onMessage = (socket: WebSocket, data: RawData) => {
   }
 };
 
-export default { onConnection, onMessage };
+const onClose = (request: IncomingMessage) => {
+  if (!request.url) {
+    return
+  }
+  const sessionId = request.url.slice(1)
+  const gameSession = gameSessions[sessionId]
+  if (gameSession) {
+    Object.values(gameSession.players).forEach(player => {
+      player.connection.close()
+    })
+    delete gameSessions[sessionId]
+  }
+}
+
+export default { onConnection, onMessage, onClose };
