@@ -8,7 +8,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  deployment_job:
+  build_job:
     runs-on: ubuntu-22.04
     # To avoid running the workflow for documentation updates and other changes unrelated to code.
     if: ${{ ! contains(join(toJson(github.event.commits.*.message)), '#skip') }}
@@ -32,7 +32,7 @@ jobs:
       - name: Build frontend code
         run: |
           cd frontend
-          npm run build
+          npm run build:test
       - name: Checkout backend
         uses: actions/checkout@v4
         with:
@@ -66,3 +66,13 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 30
+  deployment_job:
+    needs: [build_job]
+    runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'push' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
