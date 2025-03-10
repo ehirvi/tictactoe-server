@@ -32,7 +32,7 @@ jobs:
       - name: Build frontend code
         run: |
           cd frontend
-          npm run build
+          npm run build:test
       - name: Checkout backend
         uses: actions/checkout@v4
         with:
