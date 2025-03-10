@@ -6,7 +6,15 @@ import eventHandlers from "./websocket/eventHandlers";
 
 const app = express();
 const PORT = 3000;
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://tictactoe-web.fly.dev/",
+      "http://localhost:5173",
+      "http://localhost:3003",
+    ],
+  })
+);
 
 app.get("/ping", (_req, res) => {
   res.send("pong");
