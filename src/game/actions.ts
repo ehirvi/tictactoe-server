@@ -1,7 +1,7 @@
 import gameSessions from "../data/gameSessions";
 import {
   GameBoardUpdateEvent,
-  GameOverEvent,
+  GameStatusEvent,
   GameSession,
   Player,
   PlayerMark,
@@ -26,6 +26,14 @@ const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
     };
     Object.values(gameSession.players).forEach((player) => {
       player.connection.send(JSON.stringify(gameBoardUpdateEvent));
+      const gameStatusEvent: GameStatusEvent = {
+        type: "GameStatus",
+        message:
+          player.role === gameBoardUpdateEvent.turn
+            ? "Your turn!"
+            : "Opponent's turn!",
+      };
+      player.connection.send(JSON.stringify(gameStatusEvent));
     });
     checkGameConditions(gameSession, player.id, playerMark);
   }
@@ -47,25 +55,25 @@ const checkGameConditions = (
   if (playerWon) {
     gameSession.on_going = false;
     Object.values(gameSession.players).forEach((player) => {
-      const gameOverEvent: GameOverEvent = {
-        type: "GameOver",
+      const gameStatusEvent: GameStatusEvent = {
+        type: "GameStatus",
         message: player.id === playerId ? "You have won!" : "You have lost!",
       };
-      player.connection.send(JSON.stringify(gameOverEvent));
+      player.connection.send(JSON.stringify(gameStatusEvent));
       player.connection.close();
     });
-    delete gameSessions[gameSession.id]
+    delete gameSessions[gameSession.id];
   } else if (isBoardFull(gameSession.game_board)) {
     gameSession.on_going = false;
-    const gameOverEvent: GameOverEvent = {
-      type: "GameOver",
+    const gameStatusEvent: GameStatusEvent = {
+      type: "GameStatus",
       message: "It's a draw!",
     };
     Object.values(gameSession.players).forEach((player) => {
-      player.connection.send(JSON.stringify(gameOverEvent));
+      player.connection.send(JSON.stringify(gameStatusEvent));
       player.connection.close();
     });
-    delete gameSessions[gameSession.id]
+    delete gameSessions[gameSession.id];
   }
 };
 
