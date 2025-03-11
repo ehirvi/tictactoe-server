@@ -4,7 +4,13 @@ import { v4 as uuid } from "uuid";
 import actions from "../game/actions";
 import gameSessions from "../data/gameSessions";
 import { parseGameEvent } from "../utils/parsers";
-import { GameBoardUpdateEvent, Player, PlayerJoinEvent } from "../utils/types";
+import {
+  GameBoardUpdateEvent,
+  Player,
+  PlayerJoinEvent,
+  GameStatusEvent,
+  GameStartEvent,
+} from "../utils/types";
 
 const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   if (!request.url) {
@@ -13,6 +19,11 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   }
   const sessionId = request.url.slice(1);
   const gameSession = gameSessions[sessionId];
+  if (!gameSession) {
+    socket.close();
+    return;
+  }
+
   if (Object.keys(gameSession.players).length > 1) {
     socket.send("The game already has 2 players");
     socket.close();
@@ -26,7 +37,7 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
     connection: socket,
     role: playerRole,
   };
-  gameSessions[sessionId].players[player.id] = player;
+  gameSession.players[player.id] = player
   const playerJoinEvent: PlayerJoinEvent = {
     type: "PlayerJoin",
     player_id: player.id,
@@ -39,6 +50,26 @@ const onConnection = (socket: WebSocket, request: IncomingMessage) => {
   };
   socket.send(JSON.stringify(playerJoinEvent));
   socket.send(JSON.stringify(gameBoardUpdateEvent));
+  if (playerRole === "Host") {
+    const gameStatusEvent: GameStatusEvent = {
+      type: "GameStatus",
+      message: "Waiting for Player 2 to join...",
+    };
+    socket.send(JSON.stringify(gameStatusEvent));
+  } else {
+    Object.values(gameSession.players).forEach((player) => {
+      const gameStartEvent: GameStartEvent = {
+        type: "GameStart",
+        all_players_joined: true,
+      };
+      const gameStatusEvent: GameStatusEvent = {
+        type: "GameStatus",
+        message: player.role === "Host" ? "Your turn!" : "Opponent's turn!",
+      };
+      player.connection.send(JSON.stringify(gameStartEvent));
+      player.connection.send(JSON.stringify(gameStatusEvent));
+    });
+  }
 };
 
 const onMessage = (socket: WebSocket, data: RawData) => {
@@ -64,16 +95,16 @@ const onMessage = (socket: WebSocket, data: RawData) => {
 
 const onClose = (request: IncomingMessage) => {
   if (!request.url) {
-    return
+    return;
   }
-  const sessionId = request.url.slice(1)
-  const gameSession = gameSessions[sessionId]
+  const sessionId = request.url.slice(1);
+  const gameSession = gameSessions[sessionId];
   if (gameSession) {
-    Object.values(gameSession.players).forEach(player => {
-      player.connection.close()
-    })
-    delete gameSessions[sessionId]
+    Object.values(gameSession.players).forEach((player) => {
+      player.connection.close();
+    });
+    delete gameSessions[sessionId];
   }
-}
+};
 
 export default { onConnection, onMessage, onClose };

@@ -29,14 +29,19 @@ export interface PlayerJoinEvent {
   role: PlayerRole;
 }
 
+export interface GameStartEvent {
+  type: "GameStart";
+  all_players_joined: boolean;
+}
+
 export interface GameBoardUpdateEvent {
   type: "GameBoardUpdate";
   game_board: GameBoard;
   turn: PlayerRole;
 }
 
-export interface GameOverEvent {
-  type: "GameOver";
+export interface GameStatusEvent {
+  type: "GameStatus";
   message: string;
 }
 
