@@ -1,10 +1,10 @@
-import dotenv from "dotenv"
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 
-const SECRET = process.env.SECRET;
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!SECRET) {
+if (!JWT_SECRET) {
   throw new Error("ENV: SECRET not defined");
 }
 
-export default { SECRET };
+export default { JWT_SECRET };

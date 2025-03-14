@@ -23,11 +23,11 @@ export interface GameSession {
   players: PlayerConnection[];
   game_board: GameBoard;
   turn: PlayerRole;
-  on_going: boolean;
 }
 
 export type GameSessionMap = Record<string, GameSession>;
 
+// Events sent by the server
 export interface GameStartEvent {
   type: "GameStart";
   all_players_joined: boolean;
@@ -44,11 +44,8 @@ export interface GameStatusEvent {
   message: string;
 }
 
-// Events received and handled by the server
+// Events sent by the client
 export interface PlayerMoveEvent {
   type: "PlayerMove";
   position: number;
 }
-
-// TODO: Add all events that are handled in the server into this union
-// export type ServerEvent = PlayerMoveEvent;

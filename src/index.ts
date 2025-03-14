@@ -2,7 +2,11 @@ import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
 import gamesRouter from "./routes/games";
-import eventHandlers from "./websocket/eventHandlers";
+import {
+  handleConnection,
+  handleDisconnection,
+  handleMessage,
+} from "./websocket/clientEvents";
 import { PlayerConnection } from "./utils/types";
 
 const app = express();
@@ -30,13 +34,13 @@ const server = app.listen(PORT, () => {
 const wss = new WebSocketServer({ server });
 
 wss.on("connection", (socket: PlayerConnection, request) => {
-  eventHandlers.onConnection(socket, request);
+  handleConnection(socket, request);
 
   socket.on("message", (data) => {
-    eventHandlers.onMessage(socket, data);
+    handleMessage(socket, data);
   });
 
   socket.on("close", () => {
-    eventHandlers.onClose(socket);
+    handleDisconnection(socket);
   });
 });

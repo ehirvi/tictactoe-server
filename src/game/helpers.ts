@@ -1,4 +1,4 @@
-import { GameBoard, PlayerMark } from "../utils/types";
+import { GameBoard, PlayerConnection, PlayerMark } from "../utils/types";
 
 export const winningRows = [
   [0, 1, 2],
@@ -26,11 +26,31 @@ export const hasWinningRow = (
   return false;
 };
 
-export const isBoardFull = (gameBoard: GameBoard) => {
+export const isSpotEmpty = (gameBoard: GameBoard, position: number) => {
+  return gameBoard[position] === null ? true : false;
+};
+
+export const isDraw = (gameBoard: GameBoard) => {
   for (const i of gameBoard) {
     if (i === null) {
       return false;
     }
   }
   return true;
+};
+
+export const hasPlayerWon = (
+  gameBoard: GameBoard,
+  player: PlayerConnection
+) => {
+  let hasWon = false;
+  const playerMark = player.playerRole === "Host" ? "X" : "O";
+  for (const row of winningRows) {
+    if (!hasWinningRow(gameBoard, row, playerMark)) {
+      continue;
+    }
+    hasWon = true;
+    break;
+  }
+  return hasWon;
 };
