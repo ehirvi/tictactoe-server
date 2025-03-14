@@ -1,78 +1,80 @@
-import { RawData, WebSocket } from "ws";
+import { RawData } from "ws";
 import { IncomingMessage } from "http";
-import { v4 as uuid } from "uuid";
+import jwt from "jsonwebtoken";
 import actions from "../game/actions";
 import gameSessions from "../data/gameSessions";
-import { parseGameEvent } from "../utils/parsers";
+import { parseGameEvent, parsePlayerToken } from "../utils/parsers";
 import {
   GameBoardUpdateEvent,
-  Player,
-  PlayerJoinEvent,
   GameStatusEvent,
   GameStartEvent,
+  PlayerToken,
+  PlayerConnection,
 } from "../utils/types";
+import config from "../utils/config";
 
-const onConnection = (socket: WebSocket, request: IncomingMessage) => {
+const onConnection = (socket: PlayerConnection, request: IncomingMessage) => {
   if (!request.url) {
     socket.close();
     return;
   }
-  const sessionId = request.url.slice(1);
-  const gameSession = gameSessions[sessionId];
-  if (!gameSession) {
-    socket.close();
-    return;
-  }
+  try {
+    const urlParam = request.url.slice(1);
+    const signedPlayerToken = jwt.verify(urlParam, config.SECRET);
+    const playerToken: PlayerToken = parsePlayerToken(signedPlayerToken);
+    const gameSession = gameSessions[playerToken.game_id];
+    if (!gameSession) {
+      socket.close();
+      return;
+    }
+    if (gameSession.players.length === 2) {
+      socket.send("The game already has 2 players");
+      socket.close();
+      return;
+    }
+    socket.playerId = playerToken.player_id;
+    socket.gameId = playerToken.game_id;
+    socket.playerRole = playerToken.role;
 
-  if (Object.keys(gameSession.players).length > 1) {
-    socket.send("The game already has 2 players");
-    socket.close();
-    return;
-  }
-  const playerRole =
-    Object.keys(gameSession.players).length === 0 ? "Host" : "Guest";
+    gameSession.players = gameSession.players.concat(socket);
 
-  const player: Player = {
-    id: uuid(),
-    connection: socket,
-    role: playerRole,
-  };
-  gameSession.players[player.id] = player
-  const playerJoinEvent: PlayerJoinEvent = {
-    type: "PlayerJoin",
-    player_id: player.id,
-    role: player.role,
-  };
-  const gameBoardUpdateEvent: GameBoardUpdateEvent = {
-    type: "GameBoardUpdate",
-    game_board: gameSession.game_board,
-    turn: gameSession.turn,
-  };
-  socket.send(JSON.stringify(playerJoinEvent));
-  socket.send(JSON.stringify(gameBoardUpdateEvent));
-  if (playerRole === "Host") {
-    const gameStatusEvent: GameStatusEvent = {
-      type: "GameStatus",
-      message: "Waiting for Player 2 to join...",
+    const gameBoardUpdateEvent: GameBoardUpdateEvent = {
+      type: "GameBoardUpdate",
+      game_board: gameSession.game_board,
+      turn: gameSession.turn,
     };
-    socket.send(JSON.stringify(gameStatusEvent));
-  } else {
-    Object.values(gameSession.players).forEach((player) => {
-      const gameStartEvent: GameStartEvent = {
-        type: "GameStart",
-        all_players_joined: true,
-      };
+    socket.send(JSON.stringify(gameBoardUpdateEvent));
+
+    if (gameSession.players.length === 1) {
       const gameStatusEvent: GameStatusEvent = {
         type: "GameStatus",
-        message: player.role === "Host" ? "Your turn!" : "Opponent's turn!",
+        message: "Waiting for Player 2 to join...",
       };
-      player.connection.send(JSON.stringify(gameStartEvent));
-      player.connection.send(JSON.stringify(gameStatusEvent));
-    });
+      socket.send(JSON.stringify(gameStatusEvent));
+    } else if (gameSession.players.length === 2) {
+      gameSession.players.forEach((player) => {
+        const gameStartEvent: GameStartEvent = {
+          type: "GameStart",
+          all_players_joined: true,
+        };
+        const gameStatusEvent: GameStatusEvent = {
+          type: "GameStatus",
+          message:
+            player.playerRole === gameSession.turn
+              ? "Your turn!"
+              : "Opponent's turn!",
+        };
+        player.send(JSON.stringify(gameStartEvent));
+        player.send(JSON.stringify(gameStatusEvent));
+      });
+    }
+  } catch (error: unknown) {
+    console.error(error);
+    socket.close();
   }
 };
 
-const onMessage = (socket: WebSocket, data: RawData) => {
+const onMessage = (socket: PlayerConnection, data: RawData) => {
   if (data instanceof Buffer) {
     try {
       const object: unknown = JSON.parse(data.toString());
@@ -80,7 +82,7 @@ const onMessage = (socket: WebSocket, data: RawData) => {
       if (gameEvent) {
         switch (gameEvent.type) {
           case "PlayerMove":
-            actions.movePlayer(gameEvent);
+            actions.movePlayer(socket, gameEvent);
             break;
         }
       }
@@ -93,17 +95,25 @@ const onMessage = (socket: WebSocket, data: RawData) => {
   }
 };
 
-const onClose = (request: IncomingMessage) => {
-  if (!request.url) {
+// If a player disconnects due to unreliable WebSocket stream, remove them from the game session. If the player doesn't reconnect within 30 seconds, end the game.
+const onClose = (socket: PlayerConnection) => {
+  if (!socket.gameId) {
     return;
   }
-  const sessionId = request.url.slice(1);
-  const gameSession = gameSessions[sessionId];
+  const gameId = socket.gameId;
+  const gameSession = gameSessions[gameId];
   if (gameSession) {
-    Object.values(gameSession.players).forEach((player) => {
-      player.connection.close();
-    });
-    delete gameSessions[sessionId];
+    gameSession.players = gameSession.players.filter(
+      (player) => player.playerId !== socket.playerId
+    );
+    setTimeout(() => {
+      if (gameSession.players.length < 2) {
+        gameSession.players.forEach((player) => {
+          player.close();
+        });
+        delete gameSessions[gameId];
+      }
+    }, 30000);
   }
 };
 

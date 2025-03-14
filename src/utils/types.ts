@@ -6,28 +6,27 @@ export type PlayerRole = "Host" | "Guest";
 
 export type GameBoard = (PlayerMark | null)[];
 
-export interface Player {
-  id: string;
-  connection: WebSocket;
+export interface PlayerConnection extends WebSocket {
+  playerId: string;
+  gameId: string;
+  playerRole: PlayerRole;
+}
+
+export interface PlayerToken {
+  player_id: string;
+  game_id: string;
   role: PlayerRole;
 }
 
 export interface GameSession {
   id: string;
-  players: Record<string, Player>;
+  players: PlayerConnection[];
   game_board: GameBoard;
   turn: PlayerRole;
   on_going: boolean;
 }
 
 export type GameSessionMap = Record<string, GameSession>;
-
-// Events sent to and handled by the clients
-export interface PlayerJoinEvent {
-  type: "PlayerJoin";
-  player_id: string;
-  role: PlayerRole;
-}
 
 export interface GameStartEvent {
   type: "GameStart";
@@ -48,10 +47,6 @@ export interface GameStatusEvent {
 // Events received and handled by the server
 export interface PlayerMoveEvent {
   type: "PlayerMove";
-  game_id: string;
-  player: {
-    id: string;
-  };
   position: number;
 }
 

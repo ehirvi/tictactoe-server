@@ -3,19 +3,21 @@ import {
   GameBoardUpdateEvent,
   GameStatusEvent,
   GameSession,
-  Player,
   PlayerMark,
   PlayerMoveEvent,
+  PlayerConnection,
 } from "../utils/types";
 import { hasWinningRow, isBoardFull, winningRows } from "./helpers";
 
-const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
-  const sessionId = playerMoveEvent.game_id;
-  const gameSession = gameSessions[sessionId];
+const movePlayer = (
+  socket: PlayerConnection,
+  playerMoveEvent: PlayerMoveEvent
+) => {
+  const gameId = socket.gameId;
+  const gameSession = gameSessions[gameId];
   console.log(gameSessions);
   if (gameSession.game_board[playerMoveEvent.position] === null) {
-    const player = gameSession.players[playerMoveEvent.player.id];
-    const playerRole = player.role;
+    const playerRole = socket.playerRole;
     const playerMark = playerRole === "Host" ? "X" : "O";
     gameSession.game_board[playerMoveEvent.position] = playerMark;
     gameSession.turn = playerRole === "Host" ? "Guest" : "Host";
@@ -24,24 +26,24 @@ const movePlayer = (playerMoveEvent: PlayerMoveEvent) => {
       game_board: gameSession.game_board,
       turn: gameSession.turn,
     };
-    Object.values(gameSession.players).forEach((player) => {
-      player.connection.send(JSON.stringify(gameBoardUpdateEvent));
+    gameSession.players.forEach((player) => {
+      player.send(JSON.stringify(gameBoardUpdateEvent));
       const gameStatusEvent: GameStatusEvent = {
         type: "GameStatus",
         message:
-          player.role === gameBoardUpdateEvent.turn
+          player.playerRole === gameBoardUpdateEvent.turn
             ? "Your turn!"
             : "Opponent's turn!",
       };
-      player.connection.send(JSON.stringify(gameStatusEvent));
+      player.send(JSON.stringify(gameStatusEvent));
     });
-    checkGameConditions(gameSession, player.id, playerMark);
+    checkGameConditions(gameSession, socket.playerId, playerMark);
   }
 };
 
 const checkGameConditions = (
   gameSession: GameSession,
-  playerId: Player["id"],
+  playerId: PlayerConnection["playerId"],
   playerMark: PlayerMark
 ) => {
   let playerWon = false;
@@ -54,13 +56,13 @@ const checkGameConditions = (
   }
   if (playerWon) {
     gameSession.on_going = false;
-    Object.values(gameSession.players).forEach((player) => {
+    gameSession.players.forEach((player) => {
       const gameStatusEvent: GameStatusEvent = {
         type: "GameStatus",
-        message: player.id === playerId ? "You have won!" : "You have lost!",
+        message: player.playerId === playerId ? "You have won!" : "You have lost!",
       };
-      player.connection.send(JSON.stringify(gameStatusEvent));
-      player.connection.close();
+      player.send(JSON.stringify(gameStatusEvent));
+      player.close();
     });
     delete gameSessions[gameSession.id];
   } else if (isBoardFull(gameSession.game_board)) {
@@ -69,9 +71,9 @@ const checkGameConditions = (
       type: "GameStatus",
       message: "It's a draw!",
     };
-    Object.values(gameSession.players).forEach((player) => {
-      player.connection.send(JSON.stringify(gameStatusEvent));
-      player.connection.close();
+    gameSession.players.forEach((player) => {
+      player.send(JSON.stringify(gameStatusEvent));
+      player.close();
     });
     delete gameSessions[gameSession.id];
   }

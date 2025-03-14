@@ -1,11 +1,13 @@
 import { z } from "zod";
 
+export const playerTokenSchema = z.object({
+  player_id: z.string(),
+  game_id: z.string(),
+  role: z.literal("Host").or(z.literal("Guest")),
+});
+
 export const playerMoveSchema = z.object({
   type: z.literal("PlayerMove"),
-  game_id: z.string(),
-  player: z.object({
-    id: z.string(),
-  }),
   position: z.number(),
 });
 
