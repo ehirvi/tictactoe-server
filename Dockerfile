@@ -9,6 +9,7 @@ RUN npm prune --omit=dev
 
 # Production stage
 FROM node:20-alpine AS production
+ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
