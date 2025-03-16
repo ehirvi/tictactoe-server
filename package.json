@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "ts-node-dev src/index.ts",
+    "dev": "cross-env NODE_ENV=test ts-node-dev src/index.ts",
     "lint": "eslint .",
     "build": "tsc",
-    "start": "node build/index.js",
+    "start": "cross-env NODE_ENV=production node build/index.js",
+    "start:test": "cross-env NODE_ENV=test node build/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,7 +15,9 @@
   "description": "",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
     "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
     "uuid": "^10.0.0",
     "ws": "^8.18.0",
     "zod": "^3.23.8"
@@ -22,10 +25,13 @@
   "devDependencies": {
     "@eslint/js": "^9.12.0",
     "@types/cors": "^2.8.17",
+    "@types/dotenv": "^6.1.1",
     "@types/eslint__js": "^8.42.3",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.12",
+    "cross-env": "^7.0.3",
     "eslint": "^9.12.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3",
