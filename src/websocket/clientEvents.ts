@@ -37,6 +37,10 @@ export const handleConnection = (
       socket.close(1011, "Game session already has 2 players");
       return;
     }
+    if (gameSession.players.some(player => player.playerId === playerToken.player_id)) {
+      socket.close(1011, "Player is already in session")
+    }
+    
     socket.playerId = playerToken.player_id;
     socket.gameId = playerToken.game_id;
     socket.playerRole = playerToken.role;
@@ -80,14 +84,14 @@ export const handleMessage = (socket: PlayerConnection, data: RawData) => {
   }
 };
 
-// If player doesn't reconnect within 30 seconds, end the game
+// If player doesn't reconnect within 120 seconds, end the game
 const waitForReconnection = (gameSession: GameSession) => {
   setTimeout(() => {
     if (gameSession.players.length < 2) {
       disconnectPlayers(gameSession.players);
       endGameSession(gameSession.id);
     }
-  }, 30000);
+  }, 120000);
 };
 
 // If a player disconnects due to broken WebSocket stream, remove them from the game session and wait for reconnection
