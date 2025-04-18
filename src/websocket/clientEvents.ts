@@ -38,9 +38,10 @@ export const handleConnection = (
       return;
     }
     if (gameSession.players.some(player => player.playerId === playerToken.player_id)) {
-      socket.close(1011, "Player is already in session")
+      socket.close(1011, "Player is already in session");
+      return;
     }
-    
+
     socket.playerId = playerToken.player_id;
     socket.gameId = playerToken.game_id;
     socket.playerRole = playerToken.role;
