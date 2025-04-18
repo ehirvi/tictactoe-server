@@ -17,6 +17,7 @@ app.use(
       "https://tictactoe-web.fly.dev",
       "http://localhost:5173",
       "http://localhost:3003",
+      "http://192.168.0.239:5173",
     ],
   })
 );

@@ -37,5 +37,5 @@ export const startGame = (players: PlayerConnection[]) => {
 };
 
 export const disconnectPlayers = (players: PlayerConnection[]) => {
-  players.forEach((player) => player.close());
+  players.forEach((player) => player.close(1000));
 };
