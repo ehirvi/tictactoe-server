@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ehirvi/tictactoe-web
+          ref: feature/ui-animations
           path: frontend
       - name: Install frontend dependencies
         run: |

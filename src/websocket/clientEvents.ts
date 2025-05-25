@@ -51,7 +51,7 @@ export const handleConnection = (
     updateGameBoard(gameSession, [socket]);
 
     if (gameSession.players.length === 1) {
-      updateGameStatus("Waiting for opponent to join...", socket);
+      updateGameStatus("Waiting for opponent to join", socket);
     } else if (gameSession.players.length === 2) {
       startGame(gameSession.players);
       gameSession.players.forEach((player) => {
