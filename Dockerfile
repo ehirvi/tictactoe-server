@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -8,7 +8,7 @@ RUN npm run build
 RUN npm prune --omit=dev
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/package.json ./
