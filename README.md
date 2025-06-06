@@ -8,10 +8,11 @@ Overview and description for the whole project is available [here](https://githu
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en)
+- [nvm](https://github.com/nvm-sh/nvm)
 
 ### Installation
 
-1. Clone this repository and install its dependencies ```npm install```
-2. Run in development mode ```npm run dev```
-3. Use with the [web client](https://github.com/ehirvi/tictactoe-web)
+1. Install correct Node version in the root of the project ```nvm install```
+2. Install project dependencies ```npm install```
+3. Run in development mode ```npm run dev```
+4. Install the [frontend](https://github.com/ehirvi/tictactoe-web)
