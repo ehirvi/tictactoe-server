@@ -15,12 +15,11 @@ jobs:
     steps:
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - name: Checkout frontend
         uses: actions/checkout@v4
         with:
           repository: ehirvi/tictactoe-web
-          ref: feature/ui-animations
           path: frontend
       - name: Install frontend dependencies
         run: |
